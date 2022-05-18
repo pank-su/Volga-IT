@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="20dp">
+
+    <TextView
+        android:id="@+id/NameTextView"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:singleLine="false"
+        android:text="Название компании"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/SymbolTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Символ компании"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="@+id/NameTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/NameTextView" />
+
+    <TextView
+        android:id="@+id/PriceTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Цена"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintBottom_toBottomOf="@+id/SymbolTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/NameTextView"
+        app:layout_constraintTop_toTopOf="@+id/NameTextView" />
+
+    <TextView
+        android:id="@+id/DiffTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Измен."
+        app:layout_constraintBottom_toBottomOf="@+id/PriceTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/PriceTextView"
+        app:layout_constraintTop_toTopOf="@+id/PriceTextView" />
+</androidx.constraintlayout.widget.ConstraintLayout>
