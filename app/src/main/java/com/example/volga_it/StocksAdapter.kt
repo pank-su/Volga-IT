@@ -5,11 +5,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import org.json.JSONObject
+import retrofit2.Retrofit
+import java.util.*
 
-class StocksAdapter(private val data: JSONArray) :
+class StocksAdapter(private val data: JSONArray, private val retrofit: Retrofit) :
     RecyclerView.Adapter<StocksAdapter.StockViewHolder>() {
     val request = Request.Builder().url("wss://ws.finnhub.io?token=c900veqad3icdhuein80").build()
     val client = OkHttpClient()
@@ -28,9 +34,16 @@ class StocksAdapter(private val data: JSONArray) :
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
         val current = data.getJSONObject(position)
         holder.apply {
-            holder.Name.text = current.getString("description")
-            holder.Symbol.text = current.getString("displaySymbol")
+            Symbol.text = current.getString("displaySymbol")
+            /*
+            По хорошему можно запрашивать имя, но мы тогда просто убиваем наш токен
+            Так как максимум 30 запросов в минуту. Конечно можно попробовать имена записать
+            в отдельный файл, но тогда при смене имени мы не будем знать что имя обновилось
+            */
+            Name.text = current.getString("description").lowercase().capitalize(Locale.getDefault())
         }
+        // client.newWebSocket(request, WebSocketWorker("{\"type\":\"subscribe\",\"symbol\":\"${current.getString("displaySymbol")}\"}", holder))
+
     }
 
     override fun getItemCount(): Int = data.length()

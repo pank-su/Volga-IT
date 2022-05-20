@@ -6,13 +6,12 @@ import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.*
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import org.json.JSONObject
 import retrofit2.Retrofit
 import java.lang.Exception
 
@@ -30,8 +29,13 @@ class MainActivity : AppCompatActivity() {
                 }
                 // println(response.body()!!.string())
                 val symbols = JSONArray(response.body()!!.string())
-                findViewById<RecyclerView>(R.id.StockView).apply { layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-                    adapter = StocksAdapter(symbols)}
+
+                findViewById<RecyclerView>(R.id.StockView).apply {
+                    layoutManager =
+                        LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+                    adapter = StocksAdapter(symbols, retrofit)
+                }
+
             } catch (e: Exception) {
                 println(e.printStackTrace())
                 AlertDialog.Builder(this@MainActivity)
