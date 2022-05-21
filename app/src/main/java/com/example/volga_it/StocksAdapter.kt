@@ -10,15 +10,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.WebSocket
 import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Retrofit
 import java.util.*
 
-class StocksAdapter(private val data: JSONArray, private val retrofit: Retrofit) :
+class StocksAdapter(private val data: JSONArray, private val retrofit: Retrofit, var offlineMode: Boolean = false) :
     RecyclerView.Adapter<StocksAdapter.StockViewHolder>() {
     val request = Request.Builder().url("wss://ws.finnhub.io?token=c900veqad3icdhuein80").build()
     val client = OkHttpClient()
+    var webSocketWorker: WebSocketWorker = WebSocketWorker(this)
+    lateinit var webSocket: WebSocket
+
+
 
     class StockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val Name = itemView.findViewById<TextView>(R.id.NameTextView)
@@ -32,6 +37,7 @@ class StocksAdapter(private val data: JSONArray, private val retrofit: Retrofit)
     }
 
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
+
         val current = data.getJSONObject(position)
         holder.apply {
             Symbol.text = current.getString("displaySymbol")
@@ -40,6 +46,12 @@ class StocksAdapter(private val data: JSONArray, private val retrofit: Retrofit)
             Так как максимум 30 запросов в минуту. Конечно можно попробовать имена записать
             в отдельный файл, но тогда при смене имени мы не будем знать что имя обновилось
             */
+            webSocketWorker.HoldersAndSymbols.add(Pair(holder, current.getString("displaySymbol")))
+            if (position == 0) {
+                webSocket = client.newWebSocket(request, webSocketWorker)
+            }else{
+                webSocketWorker.Update(webSocket)
+            }
             Name.text = current.getString("description").lowercase().capitalize(Locale.getDefault())
         }
         // client.newWebSocket(request, WebSocketWorker("{\"type\":\"subscribe\",\"symbol\":\"${current.getString("displaySymbol")}\"}", holder))
