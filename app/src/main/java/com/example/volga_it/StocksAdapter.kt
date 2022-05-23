@@ -29,11 +29,21 @@ class StocksAdapter(private val data: JSONArray, private val retrofit: Retrofit,
         val Name = itemView.findViewById<TextView>(R.id.NameTextView)
         val Symbol = itemView.findViewById<TextView>(R.id.SymbolTextView)
         val Price = itemView.findViewById<TextView>(R.id.PriceTextView)
+        val Change = itemView.findViewById<TextView>(R.id.DiffTextView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StockViewHolder {
         return StockViewHolder(LayoutInflater.from(parent.context)
             .inflate(R.layout.res_item, parent, false))
+    }
+
+    override fun onViewRecycled(holder: StockViewHolder) {
+        // TODO: Сделать удаление элементов, которые не отображаются
+        // webSocketWorker.Opened.removeAll { pair -> pair.first == holder }
+        // val saves = webSocketWorker.Opened
+//        webSocketWorker = WebSocketWorker(this, webSocketWorker.Opened)
+//        webSocket.close(1000, "Restart with new connection")
+//        client.newWebSocket(request, webSocketWorker)
     }
 
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
@@ -46,7 +56,7 @@ class StocksAdapter(private val data: JSONArray, private val retrofit: Retrofit,
             Так как максимум 30 запросов в минуту. Конечно можно попробовать имена записать
             в отдельный файл, но тогда при смене имени мы не будем знать что имя обновилось
             */
-            webSocketWorker.HoldersAndSymbols.add(Pair(holder, current.getString("displaySymbol")))
+            webSocketWorker.ToOpen.add(Pair(holder, current.getString("displaySymbol")))
             if (position == 0) {
                 webSocket = client.newWebSocket(request, webSocketWorker)
             }else{
