@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
                 findViewById<RecyclerView>(R.id.StockView).apply {
                     layoutManager =
                         LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-                    adapter = StocksAdapter(symbols, retrofit)
+                    adapter = StocksAdapter(symbols)
                 }
 
             } catch (e: Exception) {
