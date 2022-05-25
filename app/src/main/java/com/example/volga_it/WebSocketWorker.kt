@@ -48,25 +48,26 @@ class WebSocketWorker() : WebSocketListener() {
     }
 
 
+    @SuppressLint("SetTextI18n")
     override fun onMessage(webSocket: WebSocket, text: String) {
-        println(text)
+        // println(text)
         val jsonObject = JSONObject(text)
         if (jsonObject.has("type") && jsonObject.getString("type") == "ping") {
-            Toast.makeText(Opened[0].first.Symbol.context,
-                "Похоже, биржа закрыта",
-                Toast.LENGTH_SHORT).show()
+            println("Возможно биржа закрыта")
+            return
         }
         try {
             val data = JSONObject(text).getJSONArray("data").getJSONObject(0)
             Opened.find { pair -> pair.second == data.getString("s") }?.first?.Price?.text =
-                data.getDouble("p").toString()
+                data.getDouble("p").toString() + "$"
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        super.onMessage(webSocket, text)
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        println(reason)
+        // println(reason)
         // по выходным биржа не работает, поэтому переходим в оффлайн режим,
         // где данные будут загружаться из кэша, но
         // из-за большого количества акций, я не могу собрать должный список акций
@@ -78,7 +79,10 @@ class WebSocketWorker() : WebSocketListener() {
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        println(response?.code())
+        // println(response?.code())
+        val ToOpen = Opened.toList()
+        Opened.clear()
+        Subscribe(webSocket, ToOpen)
         super.onFailure(webSocket, t, response)
     }
 }

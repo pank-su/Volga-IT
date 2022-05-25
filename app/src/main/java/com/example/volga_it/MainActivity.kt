@@ -44,9 +44,5 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
-
-//        findViewById<Button>(R.id.button).setOnClickListener { _ ->
-//            client.newWebSocket(request, WebSocketWorker("{\"type\":\"subscribe\",\"symbol\":\"AAPL\"}"))
-//        }
     }
 }
