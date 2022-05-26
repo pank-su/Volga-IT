@@ -1,12 +1,11 @@
 package com.example.volga_it
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.widget.Toast
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
+
 
 class WebSocketWorker() : WebSocketListener() {
     val Opened: MutableList<Pair<StocksAdapter.StockViewHolder, String>> = mutableListOf()
@@ -58,8 +57,22 @@ class WebSocketWorker() : WebSocketListener() {
         }
         try {
             val data = JSONObject(text).getJSONArray("data").getJSONObject(0)
-            Opened.find { pair -> pair.second == data.getString("s") }?.first?.Price?.text =
-                data.getDouble("p").toString() + "$"
+            val price = data.getDouble("p")
+            val holder = Opened.find { pair -> pair.second == data.getString("s") }!!.first
+            if (holder.Price.text != "...")
+                holder.ChangeDouble = price - holder.Price.text.toString().slice(0 until holder.Price.text.length - 1).toDouble()
+            /* По хорошему это надо запускать в потоке с ui в активити(тащить до сюда ссылку на
+            объект активити, не очень хочется)
+            Но так как ошибка сильно не влияет на производительность,
+            то я просто пытаюсь снова поменять текст
+             */
+            try {
+                holder.Price.text =
+                    "$price $"
+            } catch (e: Exception) {
+               holder.Price.text =
+                    "$price $"
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
