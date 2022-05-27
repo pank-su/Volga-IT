@@ -13,6 +13,7 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Retrofit
+import java.io.InputStreamReader
 import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
@@ -20,29 +21,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // Эта карутина должна быть на SplashScreen
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                val response = retrofit.create(ApiInterface::class.java).getSymbols()
-                if (response.code() != 200) {
-                    throw Exception("Ошибка подключения")
-                }
-                // println(response.body()!!.string())
-                val symbols = JSONArray(response.body()!!.string())
-
-                findViewById<RecyclerView>(R.id.StockView).apply {
-                    layoutManager =
-                        LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-                    adapter = StocksAdapter(symbols, this@MainActivity)
-                }
-
-            } catch (e: Exception) {
-                println(e.printStackTrace())
-                AlertDialog.Builder(this@MainActivity)
-                    .setNeutralButton("OK") { _, _ -> this@MainActivity.recreate() }
-                    .setMessage("Ошибка подключения").create().show()
-            }
-
+        val inputStreamReader = InputStreamReader(baseContext.openFileInput("data.json"))
+        val data = inputStreamReader.readText()
+        findViewById<RecyclerView>(R.id.StockView).apply {
+            layoutManager =
+                LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            adapter = StocksAdapter(JSONArray(data), this@MainActivity)
         }
     }
 }

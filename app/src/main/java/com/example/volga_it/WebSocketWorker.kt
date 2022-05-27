@@ -1,13 +1,16 @@
 package com.example.volga_it
 
 import android.annotation.SuppressLint
+import android.view.View
+import androidx.core.view.isVisible
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
 
 
-class WebSocketWorker() : WebSocketListener() {
+class WebSocketWorker : WebSocketListener() {
+    // Список получяемых акций
     val Opened: MutableList<Pair<StocksAdapter.StockViewHolder, String>> = mutableListOf()
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -26,8 +29,8 @@ class WebSocketWorker() : WebSocketListener() {
     }
 
     fun Subscribe(webSocket: WebSocket, ToOpenHolder: StocksAdapter.StockViewHolder) {
-        webSocket.send("{\"type\":\"subscribe\",\"symbol\":\"${ToOpenHolder.Symbol.text}\"}")
-        Opened.add(Pair(ToOpenHolder, ToOpenHolder.Symbol.text.toString()))
+        webSocket.send("{\"type\":\"subscribe\",\"symbol\":\"${ToOpenHolder.symbol.text}\"}")
+        Opened.add(Pair(ToOpenHolder, ToOpenHolder.symbol.text.toString()))
     }
 
     fun UnSubscribe(
@@ -42,8 +45,8 @@ class WebSocketWorker() : WebSocketListener() {
     }
 
     fun UnSubscribe(webSocket: WebSocket, ToCloseHolder: StocksAdapter.StockViewHolder) {
-        webSocket.send("{\"type\":\"unsubscribe\",\"symbol\":\"${ToCloseHolder.Symbol.text}\"}")
-        Opened.remove(Pair(ToCloseHolder, ToCloseHolder.Symbol.text.toString()))
+        webSocket.send("{\"type\":\"unsubscribe\",\"symbol\":\"${ToCloseHolder.symbol.text}\"}")
+        Opened.remove(Pair(ToCloseHolder, ToCloseHolder.symbol.text.toString()))
     }
 
 
@@ -58,23 +61,23 @@ class WebSocketWorker() : WebSocketListener() {
         try {
             val data = JSONObject(text).getJSONArray("data").getJSONObject(0)
             val price = data.getDouble("p")
-            val holder = Opened.find { pair -> pair.second == data.getString("s") }!!.first
-            if (holder.Price.text != "...")
-                holder.ChangeDouble = price - holder.Price.text.toString().slice(0 until holder.Price.text.length - 1).toDouble()
-            /* По хорошему это надо запускать в потоке с ui в активити(тащить до сюда ссылку на
-            объект активити, не очень хочется)
-            Но так как ошибка сильно не влияет на производительность,
-            то я просто пытаюсь снова поменять текст
-             */
-            try {
-                holder.Price.text =
-                    "$price $"
-            } catch (e: Exception) {
-               holder.Price.text =
-                    "$price $"
+            Opened.find { pair -> pair.second == data.getString("s") }!!.first.apply {
+                if (this.price.text != "...")
+                    ChangeDouble =
+                        price - this.price.text.toString().slice(0 until this.price.text.length - 1)
+                            .toDouble()
+                activity.runOnUiThread{
+                    if (!liveIndicator.isVisible){
+                        timer.cancel()
+                        liveIndicator.visibility = View.VISIBLE
+                        animated?.start()
+                    }
+                    this.price.text =
+                        "$price $"
+                }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            println(e.printStackTrace())
         }
         super.onMessage(webSocket, text)
     }
@@ -84,10 +87,6 @@ class WebSocketWorker() : WebSocketListener() {
         // по выходным биржа не работает, поэтому переходим в оффлайн режим,
         // где данные будут загружаться из кэша, но
         // из-за большого количества акций, я не могу собрать должный список акций
-        // if (reason == "{\"type\":\"ping\"}") {
-        // StocksAdapter.offlineMode = true
-        // StocksAdapter.notifyDataSetChanged()
-        // }
         super.onClosing(webSocket, code, reason)
     }
 
