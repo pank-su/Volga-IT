@@ -60,20 +60,17 @@ class WebSocketWorker : WebSocketListener() {
         }
         try {
             val data = JSONObject(text).getJSONArray("data").getJSONObject(0)
-            val price = data.getDouble("p")
+            val new_price = data.getDouble("p")
             Opened.find { pair -> pair.second == data.getString("s") }!!.first.apply {
-                if (this.price.text != "...")
-                    ChangeDouble =
-                        price - this.price.text.toString().slice(0 until this.price.text.length - 1)
-                            .toDouble()
+                if (this._price.text != "..." && this._price.text != "Can't load")
+                    Change = new_price - Price
                 activity.runOnUiThread{
                     if (!liveIndicator.isVisible){
                         timer.cancel()
                         liveIndicator.visibility = View.VISIBLE
                         animated?.start()
                     }
-                    this.price.text =
-                        "$price $"
+                    this.Price = new_price
                 }
             }
         } catch (e: Exception) {

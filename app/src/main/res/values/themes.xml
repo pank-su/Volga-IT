@@ -12,6 +12,7 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" >?attr/colorPrimary</item>
         <item name="cardViewStyle">@style/Theme.VolgaIT.CardView</item>
+        <item name="imageButtonStyle">@style/Theme.VolgaIT.ImageBtn</item>
         <!-- Customize your theme here. -->
     </style>
 
@@ -21,6 +22,10 @@
 
     <style name="Theme.VolgaIT.MainBackGround" parent="">
         <item name="android:background">@color/colorPrimaryVariant</item>
+    </style>
+
+    <style name="Theme.VolgaIT.ImageBtn" parent="Widget.AppCompat.ImageButton">
+        <item name="android:background">@drawable/image_button_bg</item>
     </style>
 
 </resources>

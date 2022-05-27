@@ -1,5 +1,6 @@
 package com.example.volga_it
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -17,7 +18,9 @@ import java.io.InputStreamReader
 import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
-    val retrofit = Retrofit.Builder().baseUrl("https://finnhub.io/api/v1/").build()
+
+    var startingActivity = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -28,5 +31,15 @@ class MainActivity : AppCompatActivity() {
                 LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             adapter = StocksAdapter(JSONArray(data), this@MainActivity)
         }
+    }
+
+    fun OnError(){
+        if (!startingActivity) {
+            findViewById<RecyclerView>(R.id.StockView).removeAllViews()
+            startActivity(Intent(this, ErrorActivity::class.java))
+            finish()
+            startingActivity = true
+        }
+
     }
 }

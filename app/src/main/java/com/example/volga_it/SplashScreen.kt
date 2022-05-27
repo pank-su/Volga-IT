@@ -39,6 +39,8 @@ class SplashScreen : AppCompatActivity() {
                     println(e.printStackTrace())
                 }
             }
+            this@SplashScreen.startActivity(Intent(this@SplashScreen, ErrorActivity::class.java))
+            finish()
         }
     }
 }
