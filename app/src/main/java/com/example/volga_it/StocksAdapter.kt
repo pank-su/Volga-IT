@@ -120,6 +120,8 @@ class StocksAdapter(private val data: JSONArray, private val activity: MainActiv
                                 if (!priceJsonObject.isNull("d")) {
                                     Change = priceJsonObject.getDouble("d")
                                 }
+                            } catch (e: CancellationException){
+                                this.cancel()
                             } catch (e: Exception){
                                 activity.OnError()
                                 this.cancel()
