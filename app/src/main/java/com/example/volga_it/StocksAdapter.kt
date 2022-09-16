@@ -1,16 +1,16 @@
 package com.example.volga_it
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.CountDownTimer
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -24,14 +24,16 @@ import org.json.JSONObject
 import retrofit2.Retrofit
 import java.util.*
 
-class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
+class StocksAdapter(
+    var data: JSONArray,
+    private val activity: MainActivity,
+    val webSocketWorker: WebSocketWorker,
+    val webSocket: WebSocket,
+    val isLiked: Boolean = false
+) :
     RecyclerView.Adapter<StocksAdapter.StockViewHolder>() {
-    private val request =
-        Request.Builder().url("wss://ws.finnhub.io?token=c900veqad3icdhuein80").build()
+
     private val retrofit = Retrofit.Builder().baseUrl("https://finnhub.io/api/v1/").build()
-    private val client = OkHttpClient()
-    private val webSocketWorker: WebSocketWorker = WebSocketWorker()
-    private val webSocket: WebSocket = client.newWebSocket(request, webSocketWorker)
 
 
     class StockViewHolder(itemView: View, val activity: MainActivity) :
@@ -48,10 +50,12 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
         var animated: AnimatedVectorDrawableCompat? = null
         var isLiked: ImageButton = itemView.findViewById(R.id.imageButton)
         var isLikedBool: Boolean = false
+        val step: EditText = itemView.findViewById(R.id.editTextNumberDecimal)
+        lateinit var current: JSONObject
 
         // Свойство которое задаёт цену
         var Price: Double
-            get() = _change.text.toString().slice(0 until _change.text.length - 1).toDouble()
+            get() = _price.text.toString().slice(0 until _change.text.toString().length - 1).toDouble()
             @SuppressLint("SetTextI18n")
             set(value) {
                 val normalValue = Math.round(value * 1000) / 1000.0
@@ -180,18 +184,62 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
     }
 
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
-        val current = data.getJSONObject(position)
         holder.apply {
+            current = data.getJSONObject(position)
             /*
             По хорошему можно запрашивать имя, но мы тогда просто убиваем наш токен
             Так как максимум 30 запросов в минуту. Конечно можно попробовать имена записать
             в отдельный файл, но тогда при смене имени мы не будем знать что имя обновилось,
             а также у нас всего 26 000 акций
             */
+            step.visibility = View.GONE
+            if (this@StocksAdapter.isLiked) {
+                step.visibility = View.VISIBLE
+                step.setText(current.getDouble("step").toString())
+                step.addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int
+                    ) {
+                    }
+
+                    override fun onTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) {
+                    }
+
+                    override fun afterTextChanged(s: Editable?) {
+                        for (i in 0 until activity.likedData.length()) {
+                            if (activity.likedData.getJSONObject(i)
+                                    .getString("displaySymbol") == current.getString("displaySymbol")
+                            ) {
+                                try {
+                                    activity.likedData.getJSONObject(i)
+                                        .put("step", step.text.toString().toDouble())
+                                    activity.openFileOutput("likes.json", Context.MODE_PRIVATE)
+                                        .use {
+                                            it.write(activity.likedData.toString().toByteArray())
+                                        }
+                                } catch (e: Exception) {
+
+                                }
+
+                            }
+                        }
+                    }
+                })
+            }
             isLiked.setImageResource(R.drawable.ic_baseline_star_border_24)
             if (activity.likedData.length() > 0)
                 for (i in 0 until activity.likedData.length()) {
-                    if (current.getString("displaySymbol") == activity.likedData.getJSONObject(i).getString("displaySymbol")) {
+                    if (current.getString("displaySymbol") == activity.likedData.getJSONObject(i)
+                            .getString("displaySymbol")
+                    ) {
                         isLiked.setImageResource(R.drawable.ic_baseline_star_24)
                         isLikedBool = true
                         break

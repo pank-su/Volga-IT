@@ -1,8 +1,11 @@
 package com.example.volga_it
 
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
@@ -17,12 +20,15 @@ import kotlinx.coroutines.*
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.WebSocket
 import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Retrofit
 import java.io.InputStreamReader
 import java.lang.Exception
 import java.util.*
+
+const val CHANNEL_ID = "123"
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,17 +39,47 @@ class MainActivity : AppCompatActivity() {
     lateinit var likedrecyclerView: RecyclerView
     lateinit var recyclerView: RecyclerView
 
+    private fun createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "StocksAPP"
+            val descriptionText = "Новости об изменениях акций"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+            }
+            // Register the channel with the system
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        createNotificationChannel()
+
+
         var inputStreamReader = InputStreamReader(baseContext.openFileInput("data.json"))
         data = JSONArray(inputStreamReader.readText())
         inputStreamReader = InputStreamReader(baseContext.openFileInput("likes.json"))
         likedData = JSONArray(inputStreamReader.readText())
+        println(likedData.toString())
+        inputStreamReader.close()
+//        Intent(this, NotificationService::class.java).also {
+//                intent -> startService(intent)
+//        }
+        val request =
+            Request.Builder().url("wss://ws.finnhub.io?token=c900veqad3icdhuein80").build()
+        val client = OkHttpClient()
+        val webSocketWorker: WebSocketWorker = WebSocketWorker(context = this)
+        val webSocket: WebSocket = client.newWebSocket(request, webSocketWorker)
         likedrecyclerView = findViewById<RecyclerView>(R.id.likedrecyclerView).apply {
             layoutManager =
                 LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            adapter = StocksAdapter(likedData, this@MainActivity)
+            adapter = StocksAdapter(likedData, this@MainActivity, webSocketWorker, webSocket, true)
         }
         val editText = findViewById<EditText>(R.id.editTextText)
         val linearLayout: LinearLayout = findViewById(R.id.linearLayout4)
@@ -77,7 +113,7 @@ class MainActivity : AppCompatActivity() {
         recyclerView.apply {
             layoutManager =
                 LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            adapter = StocksAdapter(data, this@MainActivity)
+            adapter = StocksAdapter(data, this@MainActivity, webSocketWorker, webSocket)
         }
         linearLayout.visibility = View.GONE
         editText.addTextChangedListener(object : TextWatcher {
@@ -139,6 +175,7 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("NotifyDataSetChanged")
     fun like(obj: JSONObject){
+        obj.put("step", 0.01)
         likedData.put(obj)
         (likedrecyclerView.adapter as StocksAdapter).data = likedData
         (likedrecyclerView.adapter as StocksAdapter).notifyDataSetChanged()

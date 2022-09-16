@@ -1,16 +1,22 @@
 package com.example.volga_it
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.view.View
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.isVisible
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 
-class WebSocketWorker : WebSocketListener() {
+class WebSocketWorker(val context: Context) : WebSocketListener() {
     // Список получяемых акций
+
     val Opened: MutableList<Pair<StocksAdapter.StockViewHolder, String>> = mutableListOf()
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -63,18 +69,31 @@ class WebSocketWorker : WebSocketListener() {
             val new_price = data.getDouble("p")
             Opened.find { pair -> pair.second == data.getString("s") }!!.first.apply {
                 if (this._price.text != "..." && this._price.text != "Can't load")
-                    Change = new_price - Price
-                activity.runOnUiThread{
-                    if (!liveIndicator.isVisible){
+                    Change = if (new_price > Price) new_price - Price else Price - new_price
+                if (step.visibility == View.VISIBLE && current.getDouble("step") < Change) {
+                    var builder = NotificationCompat.Builder(context, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.logo)
+                        .setContentTitle("Ваша акция изменила значение")
+                        .setContentText(
+                            "Цена вашей акции: ${data.getDouble("p")}, Изменение: $Change"
+                        )
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    with(NotificationManagerCompat.from(context)) {
+                        notify(Random.nextInt(100000), builder.build())
+                    }
+                }
+                this.Price = new_price
+
+                activity.runOnUiThread {
+                    if (!liveIndicator.isVisible) {
                         timer.cancel()
                         liveIndicator.visibility = View.VISIBLE
                         animated?.start()
                     }
-                    this.Price = new_price
+
                 }
             }
         } catch (e: Exception) {
-            println(e.printStackTrace())
         }
         super.onMessage(webSocket, text)
     }
