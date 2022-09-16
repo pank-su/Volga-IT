@@ -22,7 +22,7 @@ import org.json.JSONObject
 import retrofit2.Retrofit
 import java.util.*
 
-class StocksAdapter(private val data: JSONArray, private val activity: MainActivity) :
+class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
     RecyclerView.Adapter<StocksAdapter.StockViewHolder>() {
     private val request =
         Request.Builder().url("wss://ws.finnhub.io?token=c900veqad3icdhuein80").build()
@@ -142,13 +142,18 @@ class StocksAdapter(private val data: JSONArray, private val activity: MainActiv
         /* Удаление неотображающих элементов из webSocket
         И сохранение цены с изменением, для того чтобы потом не прогружать
          */
+
         webSocketWorker.UnSubscribe(webSocket, holder)
-        if (holder._price.text != "..." && holder._price.text != "Can't load")
-            data.getJSONObject(holder.adapterPosition).put("price", holder._price.text)
-        if (holder._change.text.toString() != "" && holder._change.text.toString() != "Измен.")
-            data.getJSONObject(holder.adapterPosition).put("change", holder.Change)
-        holder.timer.cancel()
-        holder.taskToGetPrice?.cancel()
+        try {
+            if (holder._price.text != "..." && holder._price.text != "Can't load")
+                data.getJSONObject(holder.adapterPosition).put("price", holder._price.text)
+            if (holder._change.text.toString() != "" && holder._change.text.toString() != "Измен.")
+                data.getJSONObject(holder.adapterPosition).put("change", holder.Change)
+            holder.timer.cancel()
+            holder.taskToGetPrice?.cancel()
+        } catch (e: Exception) {
+
+        }
         super.onViewRecycled(holder)
     }
 
