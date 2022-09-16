@@ -70,7 +70,7 @@ class WebSocketWorker(val context: Context) : WebSocketListener() {
             Opened.find { pair -> pair.second == data.getString("s") }!!.first.apply {
                 if (this._price.text != "..." && this._price.text != "Can't load")
                     Change = if (new_price > Price) new_price - Price else Price - new_price
-                if (step.visibility == View.VISIBLE && current.getDouble("step") < Change) {
+                if (step.visibility == View.VISIBLE && current.getDouble("step") < Change.absoluteValue) {
                     var builder = NotificationCompat.Builder(context, CHANNEL_ID)
                         .setSmallIcon(R.drawable.logo)
                         .setContentTitle("Ваша акция изменила значение")
