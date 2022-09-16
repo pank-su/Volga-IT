@@ -1,5 +1,6 @@
 package com.example.volga_it
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import retrofit2.Retrofit
+import java.io.FileNotFoundException
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.lang.Exception
@@ -23,12 +25,20 @@ class SplashScreen : AppCompatActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             for (i in 0..3){
                 try {
-                    val response = retrofit.create(ApiInterface::class.java).getSymbols()
+                    var likes = JSONArray()
+                    try {
+                        likes = JSONArray(
+                            baseContext.openFileInput("likes.json").bufferedReader().readText()
+                        )
+                    } catch (e: FileNotFoundException) {
+                        baseContext.openFileOutput("likes.json", Context.MODE_PRIVATE).use {
+                            it.write("[]".toByteArray())
+                        }
+                    }
+                    val response = retrofit.create(ApiInterface::class.java).getSymbols("AS")
                     if (response.code() != 200) {
                         throw Exception("Ошибка подключения")
                     }
-                    // println(response.body()!!.string())
-                    // JSONArray(response.body()!!.string())
                     val streamWriter = OutputStreamWriter(applicationContext.openFileOutput("data.json", MODE_PRIVATE))
                     streamWriter.write(response.body()!!.string())
                     streamWriter.close()

@@ -7,8 +7,10 @@ import android.os.CountDownTimer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -38,10 +40,14 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
         val symbol: TextView = itemView.findViewById(R.id.SymbolTextView)
         val _price: TextView = itemView.findViewById(R.id.PriceTextView)
         val _change: TextView = itemView.findViewById(R.id.DiffTextView)
-        val pair = Pair<ImageView, ImageView>(itemView.findViewById(R.id.up),
-            itemView.findViewById(R.id.down))
+        val pair = Pair<ImageView, ImageView>(
+            itemView.findViewById(R.id.up),
+            itemView.findViewById(R.id.down)
+        )
         val liveIndicator: ImageView = itemView.findViewById(R.id.liveIndicator)
         var animated: AnimatedVectorDrawableCompat? = null
+        var isLiked: ImageButton = itemView.findViewById(R.id.imageButton)
+        var isLikedBool: Boolean = false
 
         // Свойство которое задаёт цену
         var Price: Double
@@ -75,13 +81,21 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
                     if (normalValue > 0.0) {
                         pair.second.visibility = View.GONE
                         pair.first.visibility = View.VISIBLE
-                        _change.setTextColor(ContextCompat.getColor(_change.context,
-                            R.color.secondaryDark))
+                        _change.setTextColor(
+                            ContextCompat.getColor(
+                                _change.context,
+                                R.color.secondaryDark
+                            )
+                        )
                     } else if (normalValue < 0.0) {
                         pair.first.visibility = View.GONE
                         pair.second.visibility = View.VISIBLE
-                        _change.setTextColor(ContextCompat.getColor(_change.context,
-                            R.color.primaryDark))
+                        _change.setTextColor(
+                            ContextCompat.getColor(
+                                _change.context,
+                                R.color.primaryDark
+                            )
+                        )
                     }
                     _change.visibility = View.VISIBLE
                     _change.text = "$normalValue $"
@@ -110,6 +124,11 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
                                     delay(700)
                                     continue
                                 }
+                                if (priceResponse.code() == 403) {
+                                    _price.setText("Can't load")
+                                    return@launch
+                                }
+                                println(priceResponse.code())
                                 if (priceResponse.code() != 200)
                                     throw Exception()
                                 val priceJsonObject = JSONObject(priceResponse.body()!!.string())
@@ -120,9 +139,10 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
                                 if (!priceJsonObject.isNull("d")) {
                                     Change = priceJsonObject.getDouble("d")
                                 }
-                            } catch (e: CancellationException){
+                            } catch (e: CancellationException) {
                                 this.cancel()
-                            } catch (e: Exception){
+                            } catch (e: Exception) {
+                                println(e.printStackTrace())
                                 activity.OnError()
                                 this.cancel()
                             }
@@ -134,8 +154,10 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StockViewHolder {
-        return StockViewHolder(LayoutInflater.from(parent.context)
-            .inflate(R.layout.res_item, parent, false), activity)
+        return StockViewHolder(
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.res_item, parent, false), activity
+        )
     }
 
     override fun onViewRecycled(holder: StockViewHolder) {
@@ -166,6 +188,36 @@ class StocksAdapter(var data: JSONArray, private val activity: MainActivity) :
             в отдельный файл, но тогда при смене имени мы не будем знать что имя обновилось,
             а также у нас всего 26 000 акций
             */
+            isLiked.setImageResource(R.drawable.ic_baseline_star_border_24)
+            if (activity.likedData.length() > 0)
+                for (i in 0 until activity.likedData.length()) {
+                    if (current.getString("displaySymbol") == activity.likedData.getJSONObject(i).getString("displaySymbol")) {
+                        isLiked.setImageResource(R.drawable.ic_baseline_star_24)
+                        isLikedBool = true
+                        break
+                    }
+                }
+            isLiked.setOnClickListener { _ ->
+
+                if (isLikedBool) {
+                    activity.unLike(current)
+                    isLiked.setImageResource(R.drawable.ic_baseline_star_border_24)
+                    isLikedBool = false
+                } else {
+                    if (activity.likedData.length() == 5) {
+                        Toast.makeText(
+                            activity,
+                            "Извините, но в этой версии приложения, максимальное количество понравившихся акций - 5",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@setOnClickListener
+                    }
+                    activity.like(current)
+                    isLiked.setImageResource(R.drawable.ic_baseline_star_24)
+                    isLikedBool = true
+                }
+
+            }
             symbol.text = current.getString("displaySymbol")
             this.retrofit = this@StocksAdapter.retrofit
 
