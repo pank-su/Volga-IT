@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -52,6 +53,7 @@ class StocksAdapter(
         var isLikedBool: Boolean = false
         val step: EditText = itemView.findViewById(R.id.editTextNumberDecimal)
         lateinit var current: JSONObject
+        val cardView: CardView = itemView.findViewById(R.id.card)
 
         // Свойство которое задаёт цену
         var Price: Double
@@ -164,6 +166,8 @@ class StocksAdapter(
         )
     }
 
+
+
     override fun onViewRecycled(holder: StockViewHolder) {
         /* Удаление неотображающих элементов из webSocket
         И сохранение цены с изменением, для того чтобы потом не прогружать
@@ -184,6 +188,7 @@ class StocksAdapter(
     }
 
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
+
         holder.apply {
             current = data.getJSONObject(position)
             /*
@@ -295,6 +300,13 @@ class StocksAdapter(
                 timer.start()
             }
             webSocketWorker.Subscribe(webSocket, this)
+            cardView.setOnClickListener {
+                    _ ->
+                activity.startActivity(Intent(activity, ChartScreen::class.java).apply {
+                    this.putExtra("name", name.text.toString())
+                    this.putExtra("symbol", symbol.text.toString())
+                })
+            }
         }
     }
 
