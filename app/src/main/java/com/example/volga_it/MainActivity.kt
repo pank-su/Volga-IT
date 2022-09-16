@@ -93,14 +93,19 @@ class MainActivity : AppCompatActivity() {
                 id: Long
             ) {
                 CoroutineScope(Dispatchers.Main).launch {
-                    println(arrayListOf<String>(*resources.getStringArray(R.array.exchanges))[position])
-                    val res = retrofit.create(ApiInterface::class.java).getSymbols(arrayListOf<String>(*resources.getStringArray(R.array.exchanges))[position])
-                    if (res.isSuccessful){
-                        data = JSONArray(res.body()!!.string())
-                        println(data.toString())
-                        (recyclerView.adapter as StocksAdapter).data = data
-                        (recyclerView.adapter as StocksAdapter).notifyDataSetChanged()
+                    try {
+                        val res = retrofit.create(ApiInterface::class.java).getSymbols(arrayListOf<String>(*resources.getStringArray(R.array.exchanges))[position])
+                        if (res.isSuccessful){
+                            data = JSONArray(res.body()!!.string())
+                            println(data.toString())
+                            (recyclerView.adapter as StocksAdapter).data = data
+                            (recyclerView.adapter as StocksAdapter).notifyDataSetChanged()
+                            return@launch
+                        }
+                    }catch (e: Exception){
+                        OnError()
                     }
+
 
                 }
             }
